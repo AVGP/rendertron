@@ -39,6 +39,8 @@ export const botUserAgents = [
   'whatsapp',
 ];
 
+const mobileBotModifiers = ['mobile', 'android'];
+
 /**
  * A default set of file extensions for static assets that do not need to be
  * proxied.
@@ -97,8 +99,9 @@ export function makeMiddleware(options: Options): express.Handler {
   }
   const userAgentPattern =
       options.userAgentPattern || new RegExp(botUserAgents.join('|'), 'i');
+  const mobileBotPattern = new RegExp(mobileBotModifiers.join('|'), 'i');
   const excludeUrlPattern = options.excludeUrlPattern ||
-      new RegExp(`\\.(${staticFileExtensions.join('|')})$`, 'i');
+  new RegExp(`\\.(${staticFileExtensions.join('|')})$`, 'i');
   const injectShadyDom = !!options.injectShadyDom;
   // The Rendertron service itself has a hard limit of 10 seconds to render, so
   // let's give a little more time than that by default.
@@ -114,7 +117,12 @@ export function makeMiddleware(options: Options): express.Handler {
     const incomingUrl =
         req.protocol + '://' + req.get('host') + req.originalUrl;
     let renderUrl = proxyUrl + encodeURIComponent(incomingUrl);
-    if (injectShadyDom) {
+    if (mobileBotPattern.test(ua)) {
+      renderUrl += '?mobile=true';
+      if (injectShadyDom) {
+        renderUrl += '&wc-inject-shadydom=true';
+      }
+    } else if (injectShadyDom) {
       renderUrl += '?wc-inject-shadydom=true';
     }
     request({url: renderUrl, timeout}, (e) => {

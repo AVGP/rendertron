@@ -53,6 +53,7 @@ function makeProxy() {
 }
 
 const bot = 'slackbot';
+const mobileBot = 'bingbot Android';
 const human = 'Chrome';
 
 /**
@@ -102,6 +103,15 @@ test('adds shady dom parameter', async (t) => {
   const res = await get(bot, appUrl, '/foo');
   t.is(res.status, 200);
   t.is(res.text, 'proxy ' + appUrl + '/foo?wc-inject-shadydom=true');
+});
+
+test('adds mobile parameter for mobile bots', async (t) => {
+  const proxyUrl = await listen(makeProxy());
+  const appUrl = await listen(makeApp({proxyUrl}));
+
+  const res = await get(mobileBot, appUrl, '/foo');
+  t.is(res.status, 200);
+  t.is(res.text, 'proxy ' + appUrl + '/foo?mobile=true');  
 });
 
 test('excludes static file paths by default', async (t) => {
